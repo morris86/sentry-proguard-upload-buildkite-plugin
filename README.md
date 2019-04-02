@@ -1,20 +1,21 @@
-# sentry-dsym-upload-buildkite-plugin
+# sentry-proguard-upload-buildkite-plugin
 
-A [Buildkite](https://buildkite.com/) plugin to upload iOS app debugging symbols to [Sentry](https://sentry.io/).
+A [Buildkite](https://buildkite.com/) plugin to upload Android app ProGuard mapping files to [Sentry](https://sentry.io/).
 
 ## Example
 
 ```yml
 steps:
   - name: ":package:"
-    command: .ci-scripts/build-and-archive.sh
+    command: ./gradlew assembleRelease
     env:
       SENTRY_ORG: organization
       SENTRY_PROJECT: project
     plugins:
-      - sentry-dsym-upload:
-          info-plist: .ci-artifacts/Xyzzy.xcarchive/Products/Applications/Xyzzy.app/Info.plist
-          path: .ci-artifacts/Xyzzy.app.dSYM
+      - sentry-proguard-upload:
+          merged_manifest: "app/build/intermediates/merged_manifests/release/AndroidManifest.xml"
+          mapping: "app/build/outputs/mapping/r8/release/mapping.txt"
+          write_properties: "app/build/intermediates/assets/release/sentry-debug-meta.properties"
 ```
 
 ## Environment Variables
@@ -45,13 +46,17 @@ Specifies the environment variable containing the Sentry project slug
 
 Default: `SENTRY_PROJECT`
 
-### `info-plist` (optional)
+### `merged_manifest`
 
-Specifies the path to the Info.plist to allow Sentry to associate the symbols with a build
+Specifies the path to the merged (or full) AndroidManifest.xml file
 
-### `path`
+### `mapping`
 
-Specifies the path to the .dSYM to upload
+Specifies the path to the ProGuard mapping file to upload
+
+### `write_properties`
+
+Specifies the path where Sentry should write out metadata that is generated. Usually this metadata is just a hash of the mapping file.
 
 ## License
 

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 if [[ "$BUILDKITE_COMMAND_EXIT_STATUS" -ne 0 ]]; then
-	echo '[!] Build failed, skipping Sentry dSYM upload'
+	echo '[!] Build failed, skipping Sentry ProGuard mapping upload'
 	exit 0
 fi
 
@@ -10,44 +10,49 @@ if [[ -z "${SENTRY_AUTH_TOKEN-}" ]]; then
 	exit 1
 fi
 
-if [[ -n "${BUILDKITE_PLUGIN_SENTRY_DSYM_UPLOAD_ORG-}" ]]; then
-	SENTRY_ORG=${BUILDKITE_PLUGIN_SENTRY_DSYM_UPLOAD_ORG}
-elif [[ -n "${BUILDKITE_PLUGIN_SENTRY_DSYM_UPLOAD_ORG_FROM-}" ]]; then
-	SENTRY_ORG=$(eval "echo \$$BUILDKITE_PLUGIN_SENTRY_DSYM_UPLOAD_ORG_FROM")
+if [[ -n "${BUILDKITE_PLUGIN_SENTRY_PROGUARD_UPLOAD_ORG-}" ]]; then
+	SENTRY_ORG=${BUILDKITE_PLUGIN_SENTRY_PROGUARD_UPLOAD_ORG}
+elif [[ -n "${BUILDKITE_PLUGIN_SENTRY_PROGUARD_UPLOAD_ORG_FROM-}" ]]; then
+	SENTRY_ORG=$(eval "echo \$$BUILDKITE_PLUGIN_SENTRY_PROGUARD_UPLOAD_ORG_FROM")
 fi
 if [[ -z "${SENTRY_ORG-}" ]]; then
 	echo '[!] Sentry organization required'
 	exit 1
 fi
 
-if [[ -n "${BUILDKITE_PLUGIN_SENTRY_DSYM_UPLOAD_PROJECT-}" ]]; then
-	SENTRY_PROJECT=${BUILDKITE_PLUGIN_SENTRY_DSYM_UPLOAD_PROJECT}
-elif [[ -n "${BUILDKITE_PLUGIN_SENTRY_DSYM_UPLOAD_PROJECT_FROM-}" ]]; then
-	SENTRY_PROJECT=$(eval "echo \$$BUILDKITE_PLUGIN_SENTRY_DSYM_UPLOAD_PROJECT_FROM")
+if [[ -n "${BUILDKITE_PLUGIN_SENTRY_PROGUARD_UPLOAD_PROJECT-}" ]]; then
+	SENTRY_PROJECT=${BUILDKITE_PLUGIN_SENTRY_PROGUARD_UPLOAD_PROJECT}
+elif [[ -n "${BUILDKITE_PLUGIN_SENTRY_PROGUARD_UPLOAD_PROJECT_FROM-}" ]]; then
+	SENTRY_PROJECT=$(eval "echo \$$BUILDKITE_PLUGIN_SENTRY_PROGUARD_UPLOAD_PROJECT_FROM")
 fi
 if [[ -z "${SENTRY_PROJECT-}" ]]; then
 	echo '[!] Sentry project required'
 	exit 1
 fi
 
-SENTRY_CLI_INFO_PLIST=""
-if [[ ! -z "${BUILDKITE_PLUGIN_SENTRY_DSYM_UPLOAD_INFO_PLIST-}" ]]; then
-	SENTRY_CLI_INFO_PLIST="--info-plist "${BUILDKITE_PLUGIN_SENTRY_DSYM_UPLOAD_INFO_PLIST}""
+if [[ -z "${BUILDKITE_PLUGIN_SENTRY_PROGUARD_UPLOAD_MERGED_MANIFEST-}" ]]; then
+	echo '[!] Merged AndroidManifest.xml required'
+	exit 1
 fi
 
-if [[ -z "${BUILDKITE_PLUGIN_SENTRY_DSYM_UPLOAD_PATH-}" ]]; then
-	echo '[!] .dSYM path required'
+if [[ -z "${BUILDKITE_PLUGIN_SENTRY_PROGUARD_UPLOAD_MAPPING-}" ]]; then
+	echo '[!] ProGuard mapping file required'
+	exit 1
+fi
+
+if [[ -z "${BUILDKITE_PLUGIN_SENTRY_PROGUARD_UPLOAD_WRITE_PROPERTIES-}" ]]; then
+	echo '[!] Sentry metadata output file required'
 	exit 1
 fi
 
 sentry-cli \
-	upload-dsym \
-	${SENTRY_CLI_INFO_PLIST} \
-	-- \
-	${BUILDKITE_PLUGIN_SENTRY_DSYM_UPLOAD_PATH}
+	upload-proguard \
+	--android-manifest ${BUILDKITE_PLUGIN_SENTRY_PROGUARD_UPLOAD_MERGED_MANIFEST} \
+	--write-properties ${BUILDKITE_PLUGIN_SENTRY_PROGUARD_UPLOAD_WRITE_PROPERTIES} \
+	${BUILDKITE_PLUGIN_SENTRY_PROGUARD_UPLOAD_MAPPING}
 
 if [[ "$?" -ne 0 ]]; then
-    echo '[!] Sentry dSYM upload failed'
+    echo '[!] Sentry ProGuard mapping upload failed'
     exit 1
 fi
 

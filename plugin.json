@@ -1,7 +1,7 @@
 {
-    "name": "Sentry.io dSYM Upload",
-    "description": "Upload iOS app symbols to Sentry",
-    "author": "@cysp",
+    "name": "Sentry.io Android ProGuard Mapping Upload",
+    "description": "Upload Android ProGuard mapping files to Sentry",
+    "author": "@cysp and @morris86",
     "public": true,
     "requirements": [
         "bash", "sentry-cli"
